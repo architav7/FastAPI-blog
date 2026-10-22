@@ -9,6 +9,17 @@ wheels/
 
 # Virtual environments
 .venv/
+venv/
+
+# Local database files
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+
+# User-uploaded media
+/media/*
+!/media/.gitkeep
 
 # Local environment files and credentials
 .env
