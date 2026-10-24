@@ -11,9 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from database import Base,engine, get_db
 import models
+from routers import posts, users
 
-# pyrefly: ignore [missing-import]
-from schemas import PostResponse, PostCreate, UserCreate, UserResponse, PostUpdate, UserUpdate
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -30,6 +30,9 @@ app.mount("/static", StaticFiles(directory = "static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name="media")
 
 templates = Jinja2Templates(directory="templates")
+
+app.include_router(users.router, prefix="/api/users", tags=['users'])
+app.include_router(posts.router, prefix="/api/posts", tags=['posts'])
 
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
@@ -87,17 +90,6 @@ async def user_posts_page(
         "user_posts.html",
         {"posts": posts, "user": user, "title": f"{user.username}'s Posts"},
     )
-
-
-
-
-
- 
-
-
-
-
-
 
 
 
