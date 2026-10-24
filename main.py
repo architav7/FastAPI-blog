@@ -387,21 +387,23 @@ async def delete_post(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 
 
 
-    
+
+
+
 
 @app.exception_handler(StarletteHTTPException)
-def general_http_exception_handler(request: Request, exception: StarletteHTTPException):
-    message = (
-        exception.detail
-        if exception.detail
-        else "An error occurred. Please check your request and try again."
-    )
-
+async def general_http_exception_handler(request: Request, exception: StarletteHTTPException):
+   
     if request.url.path.startswith("/api"):
-        return JSONResponse(
-            status_code=exception.status_code,
-            content={"detail": message},
+        return await http_exception_handler(request, exception)
+
+    message = (
+            exception.detail
+            if exception.detail
+            else "An error occurred. Please check your request and try again."
         )
+    
+    
     return templates.TemplateResponse(
         request,
         "error.html",
@@ -412,6 +414,10 @@ def general_http_exception_handler(request: Request, exception: StarletteHTTPExc
         },
         status_code=exception.status_code,
     )
+
+
+
+
 
 
 @app.exception_handler(RequestValidationError)
