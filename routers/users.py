@@ -2,25 +2,30 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import models
 from database import get_db
-from schemas import PostResponse, UserCreate, UserResponse, UserUpdate
+from schemas import PostResponse, UserCreate, UserPublic, UserPrivate, UserUpdate, Token
+
+from datetime import timedelta
+from fastapi.security import OAuth2PasswordRequestForm
+from auth import create_access_token, hash_password, oauth2_scheme, verify_access_token, verify_password
+from config import settings
 
 router = APIRouter()
 
 ## create_user
 @router.post(
     "",
-    response_model=UserResponse,
+    response_model=UserPrivate,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
-        select(models.User).where(models.User.username == user.username),
+        select(models.User).where( func.lower(models.User.username) == user.username.lower()),
     )
     existing_user = result.scalars().first()
     if existing_user:
@@ -30,7 +35,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
         )
 
     result = await db.execute(
-        select(models.User).where(models.User.email == user.email),
+        select(models.User).where(func.lower(models.User.email) == user.email.lower()),
     )
     existing_email = result.scalars().first()
     if existing_email:
@@ -41,12 +46,49 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
 
     new_user = models.User(
         username=user.username,
-        email=user.email,
+        email=user.email.lower(),
+        password_hash = hash_password(user.password),
     )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
     return new_user
+
+
+
+## login_for_access_token
+@router.post("/token", response_model=Token)
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    # Look up user by email (case-insensitive)
+    # Note: OAuth2PasswordRequestForm uses "username" field, but we treat it as email
+    result = await db.execute(
+        select(models.User).where(
+            func.lower(models.User.email) == form_data.username.lower(),
+        ),
+    )
+    user = result.scalars().first()
+
+    # Verify user exists and password is correct
+    # Don't reveal which one failed (security best practice)
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Create access token with user id as subject
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": str(user.id)},
+        expires_delta=access_token_expires,
+    )
+    return Token(access_token=access_token, token_type="bearer")
+
+
 
 
 
