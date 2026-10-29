@@ -139,8 +139,16 @@ async def get_user_posts(user_id: int, db: Annotated[AsyncSession, Depends(get_d
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
+    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
+
+    if user_id != current_user.id:
+                 raise HTTPException(
+                      status_code=status.HTTP_403_FORBIDDEN,
+                      detail = "Not authorized to delete this post"
+                 )
+    
     result = await db.execute(
         select(models.User).where(models.User.id == user_id)
     )
