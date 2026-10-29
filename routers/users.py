@@ -210,8 +210,17 @@ async def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,
+    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
+
+    if user_id != current_user.id:
+                    raise HTTPException(
+                         status_code=status.HTTP_403_FORBIDDEN,
+                         detail = "Not authorized to delete this user"
+                    ) 
+    
+    
     result = await db.execute(
         select(models.User).where(models.User.id == user_id)
     )
