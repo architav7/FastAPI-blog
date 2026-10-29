@@ -146,7 +146,7 @@ async def update_user(
     if user_id != current_user.id:
                  raise HTTPException(
                       status_code=status.HTTP_403_FORBIDDEN,
-                      detail = "Not authorized to delete this post"
+                      detail = "Not authorized to update this user"
                  )
     
     result = await db.execute(
