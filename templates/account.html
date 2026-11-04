@@ -132,6 +132,31 @@
     document.getElementById('email').value = user.email;
   }
 
+  // Image Preview Handler
+  const pictureInput = document.getElementById('pictureInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const uploadBtn = document.getElementById('uploadPictureBtn');
+
+  pictureInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreview.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+
+      uploadBtn.disabled = false;
+    } else {
+      imagePreview.classList.add('d-none');
+      uploadBtn.disabled = true;
+    }
+  });
+
+  
+
+
   // Update Profile Form Handler
   const updateForm = document.getElementById('updateProfileForm');
   updateForm.addEventListener('submit', async (event) => {
