@@ -1,6 +1,7 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+import mimetypes  
 
 import httpx
 from sqlalchemy import delete, select, update
@@ -10,14 +11,14 @@ from database import AsyncSessionLocal, engine
 from image_utils import PROFILE_PICS_DIR
 from main import app
 
-POPULATE_IMAGES_DIR = Path("populate_images")
+POPULATE_IMAGES_DIR = Path(__file__).parent / "populate_images"
 
 USERS = [
     {
         "username": "CoreyMSchafer",
         "email": "CoreyMSchafer@gmail.com",
         "password": "TestPassword1!",
-        "image": "corey.png",
+        "image": "Eren-Yeager-Pfp-Aesthetic-4.webp",
     },
     {
         "username": "DefaultDude",
@@ -29,19 +30,19 @@ USERS = [
         "username": "WillowTheCat",
         "email": "TestEmail3@test.com",
         "password": "TestPassword3!",
-        "image": "willow.png",
+        "image": "Itachi-Uchiha-Pfp-HD.jpg",
     },
     {
         "username": "FarmDogs",
         "email": "TestEmail4@test.com",
         "password": "TestPassword4!",
-        "image": "farmdogs.png",
+        "image": "mikasa.jpg",
     },
     {
         "username": "PoppyTheCoder",
         "email": "TestEmail5@test.com",
         "password": "TestPassword5!",
-        "image": "poppy.png",
+        "image": "waterhashira.jpg",
     },
     {
         "username": "GoodBoyBronx",
@@ -326,13 +327,15 @@ async def populate() -> None:
                             "file": (
                                 image_name,
                                 image_path.read_bytes(),
-                                "image/png",
+                                mimetypes.guess_type(image_name)[0] or "image/jpeg",
                             ),
                         },
                         headers={"Authorization": f"Bearer {token}"},
                     )
                     response.raise_for_status()
                     print(f"    Uploaded: {image_name}")
+                else:
+                    print(f"    MISSING: {image_path.resolve()}")    
 
             users.append(
                 {"id": user["id"], "username": user["username"], "token": token},
