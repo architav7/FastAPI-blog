@@ -109,7 +109,7 @@ async def user_posts_page(
         .options(selectinload(models.Post.author))
         .where(models.Post.user_id == user_id)
         .order_by(models.Post.date_posted.desc())
-        .limit(settings.posts_per_page),
+        .limit(settings.post_per_page),
     )
     posts = result.scalars().all()
 
@@ -122,7 +122,7 @@ async def user_posts_page(
             "posts": posts,
             "user": user,
             "title": f"{user.username}'s Posts",
-            "limit": settings.posts_per_page,
+            "limit": settings.post_per_page,
             "has_more": has_more,
         },
     )
