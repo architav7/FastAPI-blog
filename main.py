@@ -46,7 +46,7 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
         select(models.Post)
         .options(selectinload(models.Post.author))
         .order_by(models.Post.date_posted.desc())
-        .limit(settings.posts_per_page),
+        .limit(settings.post_per_page),
     )
     posts = result.scalars().all()
 
@@ -58,7 +58,7 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
         {
             "posts": posts,
             "title": "Home",
-            "limit": settings.posts_per_page,
+            "limit": settings.post_per_page,
             "has_more": has_more,
         },
     )
@@ -186,4 +186,3 @@ async def validation_exception_handler(request: Request, exception: RequestValid
         },
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     )    
-
