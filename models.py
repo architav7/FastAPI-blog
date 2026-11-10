@@ -33,7 +33,6 @@ class User(Base):
     )
 
     
-
     @property
     def image_path(self) -> str:
         if self.image_file:
