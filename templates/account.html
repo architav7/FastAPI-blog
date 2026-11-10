@@ -44,24 +44,25 @@
   </div>
 
   <hr>
-  <!-- Password Reset Section (Placeholder) -->
+  <!-- Change Password Section -->
   <div class="mb-4">
     <h5>Change Password</h5>
-    <p class="text-body-secondary">Password reset coming in a future tutorial.</p>
-    <form>
+    <form id="changePasswordForm">
       <div class="mb-3">
-        <label class="form-label">Current Password</label>
-        <input type="password" class="form-control" disabled>
+        <label for="currentPassword" class="form-label">Current Password</label>
+        <input type="password" class="form-control" id="currentPassword" name="current_password" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">New Password</label>
-        <input type="password" class="form-control" disabled>
+        <label for="newPassword" class="form-label">New Password</label>
+        <input type="password" class="form-control" id="newPassword" name="new_password" required minlength="8">
+        <div class="form-text">Password must be at least 8 characters.</div>
       </div>
       <div class="mb-3">
-        <label class="form-label">Confirm New Password</label>
-        <input type="password" class="form-control" disabled>
+        <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+        <input type="password" class="form-control" id="confirmNewPassword" name="confirm_new_password" required
+          minlength="8">
       </div>
-      <button type="submit" class="btn btn-primary" disabled>Change Password</button>
+      <button type="submit" class="btn btn-primary" id="changePasswordBtn">Change Password</button>
     </form>
   </div>
   <hr>
@@ -154,7 +155,7 @@
     }
   });
 
-   // Upload Profile Picture Handler
+  // Upload Profile Picture Handler
   uploadBtn.addEventListener('click', async () => {
     const token = getToken();
     if (!token) {
@@ -222,9 +223,9 @@
       uploadBtn.disabled = pictureInput.files.length === 0;
       uploadBtn.textContent = 'Upload';
     }
-  });   
+  });
 
-  
+
 
 
   // Update Profile Form Handler
