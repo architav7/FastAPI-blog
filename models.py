@@ -27,6 +27,11 @@ class User(Base):
         cascade="all, delete-orphan",
         )
 
+    reset_tokens: Mapped[list[PasswordResetToken]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
     
 
     @property
