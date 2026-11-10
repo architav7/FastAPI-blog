@@ -24,6 +24,8 @@ async def send_email(
     if html_content:
         message.add_alternative(html_content, subtype="html")
 
+        
+
     ## aiosmtplib.send call
     await aiosmtplib.send(
             message,
