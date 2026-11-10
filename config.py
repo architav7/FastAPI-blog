@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     mail_username: str = ""
     mail_password: SecretStr = SecretStr("")
     mail_from: str = "noreply@example.com"
+    frontend_url: str
     mail_use_tls: bool = True 
 
 settings = Settings() #Loaded from .env file

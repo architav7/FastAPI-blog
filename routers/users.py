@@ -207,6 +207,7 @@ async def reset_password(
 
 
 
+
 ## change_password endpoint
 @router.patch("/me/password", status_code=status.HTTP_200_OK)
 async def change_password(
@@ -230,8 +231,6 @@ async def change_password(
 
     await db.commit()
     return {"message": "Password changed successfully"}
-
-
 
 
 
