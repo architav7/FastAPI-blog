@@ -45,12 +45,21 @@ def process_profile_image(content: bytes) -> tuple[bytes ,str]:
 
 
 
-# Delete Profile Image Function
-def delete_profile_image(filename: str | None) -> None:
-    if filename is None:
-        return
+def _upload_to_s3(file_bytes: bytes, key: str) -> None:
+    s3 = _get_s3_client()
+    s3.upload_fileobj(
+        BytesIO(file_bytes),
+        settings.s3_bucket_name,
+        key,
+        ExtraArgs={"ContentType": "image/jpeg"},
+    )
 
-    filepath = PROFILE_PICS_DIR / filename
-    if filepath.exists():
-        filepath.unlink()
+
+def _delete_from_s3(key: str) -> None:
+    s3 = _get_s3_client()
+    s3.delete_object(Bucket=settings.s3_bucket_name, Key=key)    
+
+
+
+
 
