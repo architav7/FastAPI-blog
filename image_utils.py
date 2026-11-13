@@ -26,7 +26,7 @@ def _get_s3_client():
 
 
 # Process Image Function
-def process_profile_image(content: bytes) -> str:
+def process_profile_image(content: bytes) -> tuple[bytes ,str]:
     with Image.open(BytesIO(content)) as original:
         img = ImageOps.exif_transpose(original)
 
@@ -36,13 +36,12 @@ def process_profile_image(content: bytes) -> str:
             img = img.convert("RGB")
 
         filename = f"{uuid.uuid4().hex}.jpg"
-        filepath = PROFILE_PICS_DIR / filename
+       
+        output = BytesIO()
+        img.save(output, "JPEG", quality=85, optimize=True)
+        output.seek(0)
 
-        PROFILE_PICS_DIR.mkdir(parents=True, exist_ok=True)
-
-        img.save(filepath, "JPEG", quality=85, optimize=True)
-
-    return filename
+    return output.read(), filename
 
 
 
