@@ -1,26 +1,24 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-import mimetypes  
 
 import httpx
 from sqlalchemy import delete, select, update
 
-import selectors
-
 import models
+from config import settings
 from database import AsyncSessionLocal, engine
-from image_utils import PROFILE_PICS_DIR
+from image_utils import _get_s3_client
 from main import app
 
-POPULATE_IMAGES_DIR = Path(__file__).parent / "populate_images"
+POPULATE_IMAGES_DIR = Path("populate_images")
 
 USERS = [
     {
         "username": "CoreyMSchafer",
         "email": "CoreyMSchafer@gmail.com",
         "password": "TestPassword1!",
-        "image": "Eren-Yeager-Pfp-Aesthetic-4.webp",
+        "image": "corey.png",
     },
     {
         "username": "DefaultDude",
@@ -32,19 +30,19 @@ USERS = [
         "username": "WillowTheCat",
         "email": "TestEmail3@test.com",
         "password": "TestPassword3!",
-        "image": "Itachi-Uchiha-Pfp-HD.jpg",
+        "image": "willow.png",
     },
     {
         "username": "FarmDogs",
         "email": "TestEmail4@test.com",
         "password": "TestPassword4!",
-        "image": "mikasa.jpg",
+        "image": "farmdogs.png",
     },
     {
         "username": "PoppyTheCoder",
         "email": "TestEmail5@test.com",
         "password": "TestPassword5!",
-        "image": "waterhashira.jpg",
+        "image": "poppy.png",
     },
     {
         "username": "GoodBoyBronx",
@@ -237,15 +235,24 @@ POST_44 = {
 
 
 async def clear_existing_data() -> None:
-    # Delete profile pictures from local storage
-    if PROFILE_PICS_DIR.exists():
-        for file in PROFILE_PICS_DIR.iterdir():
-            if file.is_file() and file.name != ".gitkeep":
-                file.unlink()
-        print(f"Deleted profile pictures from {PROFILE_PICS_DIR}")
+    # Delete profile pictures from S3 (need DB records to know which files)
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(models.User.image_file).where(models.User.image_file.is_not(None)),
+        )
+        filenames = result.scalars().all()
+
+    if filenames:
+        s3 = _get_s3_client()
+        s3.delete_objects(
+            Bucket=settings.s3_bucket_name,
+            Delete={"Objects": [{"Key": f"profile_pics/{f}"} for f in filenames]},
+        )
+        print(f"Deleted {len(filenames)} images from S3")
 
     # Clear database tables (order respects foreign keys)
     async with AsyncSessionLocal() as db:
+        await db.execute(delete(models.PasswordResetToken))
         await db.execute(delete(models.Post))
         await db.execute(delete(models.User))
         await db.commit()
@@ -291,7 +298,7 @@ async def populate() -> None:
         transport=transport,
         base_url="http://localhost",
     ) as client:
-        # Clear existing data (local images first, then database)
+        # Clear existing data (S3 images first, then database)
         await clear_existing_data()
 
         users: list[dict] = []
@@ -329,15 +336,13 @@ async def populate() -> None:
                             "file": (
                                 image_name,
                                 image_path.read_bytes(),
-                                mimetypes.guess_type(image_name)[0] or "image/jpeg",
+                                "image/png",
                             ),
                         },
                         headers={"Authorization": f"Bearer {token}"},
                     )
                     response.raise_for_status()
                     print(f"    Uploaded: {image_name}")
-                else:
-                    print(f"    MISSING: {image_path.resolve()}")    
 
             users.append(
                 {"id": user["id"], "username": user["username"], "token": token},
@@ -381,11 +386,8 @@ async def populate() -> None:
     print("\nDone!")
     print(f"  {len(USERS)} users")
     print(f"  {len(POSTS) + 1} posts")
-    print("  Profile pictures saved locally")
+    print("  Profile pictures uploaded to S3")
 
 
 if __name__ == "__main__":
-    asyncio.run(
-        populate(),
-        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
-    )
+    asyncio.run(populate())
