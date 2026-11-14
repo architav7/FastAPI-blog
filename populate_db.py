@@ -12,13 +12,14 @@ from image_utils import _get_s3_client
 from main import app
 
 POPULATE_IMAGES_DIR = Path("populate_images")
+MEDIA_PROFILE_PICS_DIR = Path("media") / "profile_pics"
 
 USERS = [
     {
         "username": "CoreyMSchafer",
         "email": "CoreyMSchafer@gmail.com",
         "password": "TestPassword1!",
-        "image": "corey.png",
+        "image": "0e965f89fccb40d68f3f3093b67c3d10.jpg",
     },
     {
         "username": "DefaultDude",
@@ -30,25 +31,25 @@ USERS = [
         "username": "WillowTheCat",
         "email": "TestEmail3@test.com",
         "password": "TestPassword3!",
-        "image": "willow.png",
+        "image": "59de95bff9e54dfbaeb1015bc0d525df.jpg",
     },
     {
         "username": "FarmDogs",
         "email": "TestEmail4@test.com",
         "password": "TestPassword4!",
-        "image": "farmdogs.png",
+        "image": "927be8edd5234aa09422df95d3673cca.jpg",
     },
     {
         "username": "PoppyTheCoder",
         "email": "TestEmail5@test.com",
         "password": "TestPassword5!",
-        "image": "poppy.png",
+        "image": "fbdd62669ddb44b486f37b5e55b5deb4.jpg",
     },
     {
         "username": "GoodBoyBronx",
         "email": "TestEmail6@test.com",
         "password": "TestPassword6!",
-        "image": "bronx.png",
+        "image": "0e965f89fccb40d68f3f3093b67c3d10.jpg",
     },
 ]
 
@@ -328,7 +329,7 @@ async def populate() -> None:
             token = response.json()["access_token"]
 
             if image_name := user_data.get("image"):
-                image_path = POPULATE_IMAGES_DIR / image_name
+                image_path = MEDIA_PROFILE_PICS_DIR / image_name
                 if image_path.exists():
                     response = await client.patch(
                         f"/api/users/{user['id']}/picture",
@@ -336,7 +337,7 @@ async def populate() -> None:
                             "file": (
                                 image_name,
                                 image_path.read_bytes(),
-                                "image/png",
+                                "image/jpeg",
                             ),
                         },
                         headers={"Authorization": f"Bearer {token}"},
@@ -390,4 +391,13 @@ async def populate() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(populate())
+    import sys
+
+    if sys.platform == "win32":
+        if sys.version_info >= (3, 12):
+            asyncio.run(populate(), loop_factory=asyncio.SelectorEventLoop)
+        else:
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            asyncio.run(populate())
+    else:
+        asyncio.run(populate())
