@@ -57,3 +57,27 @@ async def setup_database(test_engine):
         await conn.run_sync(Base.metadata.drop_all)
 
     await test_engine.dispose()    
+
+
+@pytest.fixture
+async def db_session(
+    test_engine,
+    setup_database,
+) -> AsyncGenerator[AsyncSession]:
+    conn = await test_engine.connect()
+    trans = await conn.begin()
+
+    test_async_session = async_sessionmaker(
+        bind=conn,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
+    )
+
+    async with test_async_session() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+            await trans.rollback()
+            await conn.close()
