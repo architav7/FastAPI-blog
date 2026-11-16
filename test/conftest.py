@@ -81,3 +81,14 @@ async def db_session(
             await session.close()
             await trans.rollback()
             await conn.close()
+
+       
+@pytest.fixture
+def mocked_aws():
+    with mock_aws():
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket=os.environ["S3_BUCKET_NAME"])
+        yield s3
+
+        
+
