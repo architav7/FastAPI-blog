@@ -39,3 +39,26 @@ async def test_create_user_duplicate_email(client: AsyncClient):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Email already registered"
+
+
+@pytest.mark.anyio
+async def test_create_user_success(client: AsyncClient):
+    response = await client.post(
+        "/api/users",
+        json={
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password": "securepassword123",
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["username"] == "newuser"
+    assert data["email"] == "newuser@example.com"
+    assert "id" in data
+    assert "image_path" in data
+    assert "password" not in data
+    assert "password_hash" not in data
+
+
