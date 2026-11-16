@@ -42,9 +42,45 @@ async def test_create_post_success(client: AsyncClient):
     assert "id" in data
     assert "date_posted" in data
     assert data["author"]["username"] == "testuser"
-    
-        
+
+
+
+@pytest.mark.anyio
+async def test_create_post_unauthorized(client: AsyncClient):
+    response = await client.post(
+        "/api/posts",
+        json={"title": "Test Post", "content": "Test content"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
+
    
+
+@pytest.mark.anyio
+async def test_update_post_success(client: AsyncClient):
+    await create_test_user(client)
+    token = await login_user(client)
+    headers = auth_header(token)
+
+    response = await client.post(
+        "/api/posts",
+        json={"title": "Original Title", "content": "Original content"},
+        headers=headers,
+    )
+    post_id = response.json()["id"]
+
+    response = await client.patch(
+        f"/api/posts/{post_id}",
+        json={"title": "Updated Title"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == "Updated Title"
+    assert data["content"] == "Original content"
+
 
 
 
