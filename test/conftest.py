@@ -90,5 +90,26 @@ def mocked_aws():
         s3.create_bucket(Bucket=os.environ["S3_BUCKET_NAME"])
         yield s3
 
-        
 
+
+@pytest.fixture
+async def client(
+    db_session: AsyncSession,
+    mocked_aws,
+) -> AsyncGenerator[AsyncClient]:
+
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+    
