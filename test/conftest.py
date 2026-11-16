@@ -1,3 +1,4 @@
+import asyncio
 import os
 from collections.abc import AsyncGenerator
 
@@ -34,7 +35,7 @@ pytest_plugins = ["anyio"]
 
 @pytest.fixture(scope="session")
 def anyio_backend():
-    return "asyncio"
+    return ("asyncio", {"loop_factory": asyncio.SelectorEventLoop})
 
     
 @pytest.fixture(scope="session")
@@ -149,3 +150,5 @@ async def login_user(
 
 def auth_header(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
